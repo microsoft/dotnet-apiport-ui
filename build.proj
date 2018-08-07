@@ -1,0 +1,73 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <OutDir Condition="'$(OutDir)' == ''">$(MSBuildThisFileDirectory)bin</OutDir>
+    <ProjectProperties>
+      Configuration=$(Configuration);
+      OutDir=$(OutDir);
+    </ProjectProperties>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SolutionFiles Include="*.sln" />
+  </ItemGroup>
+
+  <Target Name="Clean">
+    <MSBuild Projects="@(SolutionFiles)"
+             Targets="Clean"
+             Properties="$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(SolutionFiles)"
+             Targets="Build"
+             Properties="$(ProjectProperties)" />
+     <ItemGroup>
+       <AdditionalFiles Include="$(MSBuildThisFileDirectory)bin\PortabilityAnalyzer.exe"/>
+     </ItemGroup>
+     <DownloadAndAdd DownloadUrl="https://github.com/Microsoft/dotnet-apiport/releases/download/2.5.0-alpha/ApiPort.zip"
+                     OutputPath="$(MSBuildThisFileDirectory)bin\PortabilityAnalyzer.zip"
+                     AdditionalFiles="@(AdditionalFiles)" />
+
+     <Message Importance="High"
+              Text="PortabilityAnalyzer -> $(MSBuildThisFileDirectory)bin\PortabilityAnalyzer.zip" />
+  </Target>
+
+  <Target Name="Rebuild">
+    <MSBuild Projects="@(SolutionFiles)"
+             Targets="Rebuild"
+             Properties="$(ProjectProperties)" />
+  </Target>
+
+  <UsingTask
+      TaskName="DownloadAndAdd"
+      TaskFactory="CodeTaskFactory"
+      AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll" >
+    <ParameterGroup>
+      <DownloadUrl ParameterType="System.String" Required="true" />
+      <OutputPath ParameterType="System.String" Required="true" />
+      <AdditionalFiles ParameterType="System.String[]" Required="false" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.IO.Compression" />
+      <Reference Include="System.IO.Compression.FileSystem" />
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.IO.Compression" />
+      <Using Namespace="System.Net" />
+
+      <Code Type="Fragment" Language="cs">
+          var webclient = new WebClient();
+          webclient.DownloadFile(DownloadUrl, OutputPath);
+
+          using (var archive = ZipFile.Open(OutputPath, ZipArchiveMode.Update))
+          {
+              foreach (var file in AdditionalFiles)
+                  archive.CreateEntryFromFile(file, Path.GetFileName(file));
+          }
+      </Code>
+    </Task>
+  </UsingTask>
+
+</Project>
