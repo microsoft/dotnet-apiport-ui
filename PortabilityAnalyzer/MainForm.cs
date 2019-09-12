@@ -42,7 +42,7 @@ namespace PortabilityAnalyzer
 
             var p = new Process();
             p.StartInfo.FileName = apiPortPath;
-            p.StartInfo.Arguments = $"analyze -f \"{PathTextBox.Text}\" -o \"{reportPath}\" -t \".NET Core, Version=3.0\"";
+            p.StartInfo.Arguments = $"analyze -f \"{PathTextBox.Text}\" -o \"{reportPath}\" -t \".NET Core + Platform Extensions, Version=3.0\"";
             p.StartInfo.CreateNoWindow = true;
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
